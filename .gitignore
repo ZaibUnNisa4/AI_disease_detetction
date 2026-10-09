@@ -8,3 +8,11 @@ __pycache__/
 venv/
 env/
 .ipynb_checkpoints/
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+.env.local
+frontend/.env.local
