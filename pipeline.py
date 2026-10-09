@@ -24,10 +24,11 @@ class InfectiousDiseaseSystem:
         self.identifier = DiseaseIdentifier()
         print("All components initialized successfully.\n")
 
-    def get_surveillance_forecast(self, months: int = 6) -> Dict[str, Any]:
+    def get_surveillance_forecast(self, months: int = 6, save_to_db: bool = False) -> Dict[str, Any]:
         """
         Executes Phase 1 (Forecasting) and Phase 2 (Anomaly/Risk Detection).
         Returns annotated forecasts with predicted case counts, Z-scores, and alert levels.
+        Optionally persists results to Supabase.
         """
         # 1. Historical baselines
         dengue_stats = self.dengue_forecaster.get_historical_stats()
@@ -44,6 +45,34 @@ class InfectiousDiseaseSystem:
         # 4. Identify high risk periods
         combined = pd.concat([dengue_assessed, typhoid_assessed], ignore_index=True)
         anomalies = combined[combined["Is_Anomaly"] == True]
+
+        # 5. Optional database sync
+        if save_to_db:
+            try:
+                from db_client import log_forecast_record, create_outbreak_alert
+                for _, row in combined.iterrows():
+                    date_str = str(row["Date"])[:10]
+                    log_forecast_record(
+                        disease=row["Disease"],
+                        forecast_month=date_str,
+                        predicted_cases=int(row["Predicted_Cases"]),
+                        z_score=float(row["Z_Score"]),
+                        risk_level=row["Risk_Level"],
+                        baseline_mean=float(row["Baseline_Mean"]),
+                        baseline_std=float(row["Baseline_Std"]),
+                        model_name="Holt-Winters" if row["Disease"] == "Dengue" else "SARIMA"
+                    )
+                for _, alert in anomalies.iterrows():
+                    create_outbreak_alert(
+                        disease=alert["Disease"],
+                        region="Surveillance Region",
+                        risk_level=alert["Risk_Level"],
+                        z_score=float(alert["Z_Score"]),
+                        message=f"{alert['Disease']} outbreak alert for {str(alert['Date'])[:10]}: {alert['Predicted_Cases']} cases (Z={alert['Z_Score']:.2f})."
+                    )
+                print("Surveillance forecasts and alerts successfully synchronized to Supabase.")
+            except Exception as e:
+                print(f"Warning: Failed to sync forecasts to Supabase: {e}")
 
         return {
             "forecast_months": months,
@@ -62,10 +91,13 @@ class InfectiousDiseaseSystem:
         age: float,
         gender: str,
         fever_duration: float,
-        skin_manifestation: Any
+        skin_manifestation: Any,
+        patient_code: str = "P-AUTO",
+        save_to_db: bool = False
     ) -> Dict[str, Any]:
         """
         Executes Phase 3 (Disease Identification) and contextualizes with Phase 2 Outbreak Status.
+        Optionally persists clinical intake to Supabase.
         """
         # Step A: Patient symptom inference
         identification_result = self.identifier.predict_patient(
@@ -87,6 +119,23 @@ class InfectiousDiseaseSystem:
             mean=stats["mean"],
             std=stats["std"]
         )
+
+        # Step C: Optional database logging
+        if save_to_db:
+            try:
+                from db_client import log_patient_intake
+                log_patient_intake(
+                    patient_code=patient_code,
+                    age=int(age),
+                    gender=gender,
+                    fever_duration=int(fever_duration),
+                    skin_manifestation=bool(skin_manifestation),
+                    predicted_disease=predicted_disease,
+                    confidence=float(identification_result["confidence"])
+                )
+                print(f"Patient {patient_code} diagnosis logged to Supabase.")
+            except Exception as e:
+                print(f"Warning: Failed to log patient intake to Supabase: {e}")
 
         return {
             "clinical_diagnosis": identification_result,

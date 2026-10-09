@@ -33,7 +33,7 @@ def print_menu():
 
 def handle_dengue_forecast(system: InfectiousDiseaseSystem):
     print("\n" + "-" * 50)
-    print("DENGUE 6-MONTH TIME-SERIES FORECAST & RISK SCAN")
+    print("DENGUE TIME-SERIES FORECAST & RISK SCAN")
     print("-" * 50)
     try:
         steps = input("Enter forecast horizon in months [default: 6]: ").strip()
@@ -41,15 +41,47 @@ def handle_dengue_forecast(system: InfectiousDiseaseSystem):
     except ValueError:
         steps = 6
 
-    forecast_df = system.dengue_forecaster.forecast_monthly(steps=steps)
-    risk_df = system.risk_detector.assess_forecast(forecast_df, "Dengue")
+    stats = system.dengue_forecaster.get_historical_stats()
+    forecast_df = system.dengue_forecaster.forecast(steps=steps)
+    risk_df = system.risk_detector.assess_forecast(forecast_df, stats)
     print("\nForecast Results:")
     print(risk_df.to_string(index=False))
+
+    save_db = input("\nSave forecast records to Supabase? (y/n) [default: n]: ").strip().lower()
+    if save_db in ["y", "yes"]:
+        try:
+            from db_client import log_forecast_record, create_outbreak_alert
+            count = 0
+            for _, row in risk_df.iterrows():
+                # Format date to YYYY-MM-01
+                date_str = str(row["Date"])[:10]
+                log_forecast_record(
+                    disease="Dengue",
+                    forecast_month=date_str,
+                    predicted_cases=int(row["Predicted_Cases"]),
+                    z_score=float(row["Z_Score"]),
+                    risk_level=row["Risk_Level"],
+                    baseline_mean=float(row["Baseline_Mean"]),
+                    baseline_std=float(row["Baseline_Std"]),
+                    model_name="Holt-Winters"
+                )
+                if row.get("Is_Anomaly", False):
+                    create_outbreak_alert(
+                        disease="Dengue",
+                        region="Surveillance Region",
+                        risk_level=row["Risk_Level"],
+                        z_score=float(row["Z_Score"]),
+                        message=f"Dengue outbreak warning for {date_str}: {row['Predicted_Cases']} cases predicted (Z={row['Z_Score']:.2f})."
+                    )
+                count += 1
+            print(f"Logged {count} forecast records and active alerts to Supabase!")
+        except Exception as e:
+            print(f"Error logging to Supabase: {e}")
 
 
 def handle_typhoid_forecast(system: InfectiousDiseaseSystem):
     print("\n" + "-" * 50)
-    print("TYPHOID 6-MONTH TIME-SERIES FORECAST & RISK SCAN")
+    print("TYPHOID TIME-SERIES FORECAST & RISK SCAN")
     print("-" * 50)
     try:
         steps = input("Enter forecast horizon in months [default: 6]: ").strip()
@@ -57,10 +89,41 @@ def handle_typhoid_forecast(system: InfectiousDiseaseSystem):
     except ValueError:
         steps = 6
 
-    forecast_df = system.typhoid_forecaster.forecast_monthly(steps=steps)
-    risk_df = system.risk_detector.assess_forecast(forecast_df, "Typhoid")
+    stats = system.typhoid_forecaster.get_historical_stats()
+    forecast_df = system.typhoid_forecaster.forecast(steps=steps)
+    risk_df = system.risk_detector.assess_forecast(forecast_df, stats)
     print("\nForecast Results:")
     print(risk_df.to_string(index=False))
+
+    save_db = input("\nSave forecast records to Supabase? (y/n) [default: n]: ").strip().lower()
+    if save_db in ["y", "yes"]:
+        try:
+            from db_client import log_forecast_record, create_outbreak_alert
+            count = 0
+            for _, row in risk_df.iterrows():
+                date_str = str(row["Date"])[:10]
+                log_forecast_record(
+                    disease="Typhoid",
+                    forecast_month=date_str,
+                    predicted_cases=int(row["Predicted_Cases"]),
+                    z_score=float(row["Z_Score"]),
+                    risk_level=row["Risk_Level"],
+                    baseline_mean=float(row["Baseline_Mean"]),
+                    baseline_std=float(row["Baseline_Std"]),
+                    model_name="SARIMA"
+                )
+                if row.get("Is_Anomaly", False):
+                    create_outbreak_alert(
+                        disease="Typhoid",
+                        region="Surveillance Region",
+                        risk_level=row["Risk_Level"],
+                        z_score=float(row["Z_Score"]),
+                        message=f"Typhoid outbreak warning for {date_str}: {row['Predicted_Cases']} cases predicted (Z={row['Z_Score']:.2f})."
+                    )
+                count += 1
+            print(f"Logged {count} forecast records and active alerts to Supabase!")
+        except Exception as e:
+            print(f"Error logging to Supabase: {e}")
 
 
 def handle_patient_intake(system: InfectiousDiseaseSystem):
@@ -68,11 +131,15 @@ def handle_patient_intake(system: InfectiousDiseaseSystem):
     print("PATIENT CLINICAL INTAKE (DISEASE IDENTIFICATION)")
     print("-" * 50)
     try:
+        patient_code = input("Enter Patient ID/Code [default: P-001]: ").strip()
+        if not patient_code:
+            patient_code = "P-001"
+
         age_str = input("Enter Patient Age [e.g. 25]: ").strip()
         age = float(age_str) if age_str else 25.0
 
-        gender = input("Enter Patient Gender (Male/Female) [default: Male]: ").strip()
-        if not gender:
+        gender = input("Enter Patient Gender (Male/Female) [default: Male]: ").strip().capitalize()
+        if gender not in ["Male", "Female"]:
             gender = "Male"
 
         fever_str = input("Enter Fever Duration in Days [e.g. 4]: ").strip()
@@ -81,27 +148,45 @@ def handle_patient_intake(system: InfectiousDiseaseSystem):
         rash_str = input("Does the patient have rash/skin manifestation? (yes/no) [default: yes]: ").strip()
         skin_manifestation = rash_str.lower() in ["yes", "y", "true", "1"] if rash_str else True
 
-        result = system.diagnose_patient_with_risk_context(
+        result = system.screen_patient(
             age=age,
             gender=gender,
             fever_duration=fever_duration,
             skin_manifestation=skin_manifestation
         )
 
-        diag = result["patient_diagnosis"]
-        ctx = result["community_risk_context"]
+        diag = result["clinical_diagnosis"]
+        ctx = result["community_surveillance_context"]
 
         print("\n" + "=" * 50)
         print("DIAGNOSTIC REPORT")
         print("=" * 50)
+        print(f"Patient Code:          {patient_code}")
         print(f"Predicted Disease:     {diag['predicted_disease']}")
         print(f"Confidence:            {diag['confidence'] * 100:.1f}%")
         print(f"Class Probabilities:   {diag['probabilities']}")
         print("\nCommunity Outbreak Context:")
-        print(f"  Current Dengue Risk:  {ctx['dengue']['current_risk_level']} (Z={ctx['dengue']['latest_z_score']:.2f})")
-        print(f"  Current Typhoid Risk: {ctx['typhoid']['current_risk_level']} (Z={ctx['typhoid']['latest_z_score']:.2f})")
-        print(f"  Overall Community Alert: {ctx['overall_alert']}")
+        print(f"  Disease Context:      {ctx['disease']}")
+        print(f"  Current Risk Level:   {ctx['current_outbreak_risk']} (Z={ctx['current_z_score']})")
+        print(f"  Active Outbreak:      {ctx['is_outbreak_active']}")
         print("=" * 50)
+
+        save_db = input("\nSave patient diagnosis to Supabase? (y/n) [default: y]: ").strip().lower()
+        if save_db not in ["n", "no"]:
+            try:
+                from db_client import log_patient_intake
+                rec = log_patient_intake(
+                    patient_code=patient_code,
+                    age=int(age),
+                    gender=gender,
+                    fever_duration=int(fever_duration),
+                    skin_manifestation=bool(skin_manifestation),
+                    predicted_disease=diag["predicted_disease"],
+                    confidence=float(diag["confidence"])
+                )
+                print("Patient intake record successfully saved to Supabase!")
+            except Exception as e:
+                print(f"Error logging to Supabase: {e}")
 
     except Exception as e:
         print(f"Error during patient intake: {e}")
@@ -144,7 +229,8 @@ def main():
         elif choice == "3":
             handle_patient_intake(system)
         elif choice == "4":
-            system.run_full_surveillance_pipeline()
+            from pipeline import run_full_pipeline_demo
+            run_full_pipeline_demo()
         elif choice == "5":
             handle_retrain()
             # Reload models
