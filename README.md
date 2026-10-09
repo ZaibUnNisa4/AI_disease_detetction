@@ -104,6 +104,28 @@ python interactive_cli.py
 
 ---
 
+### Option 3: Launch the REST API Server (FastAPI + Swagger UI)
+Start the REST API server to serve model inferences over HTTP with interactive Swagger documentation:
+```bash
+python main.py
+# Or with uvicorn directly:
+uvicorn main:app --reload --port 8000
+```
+* **API Root**: `http://127.0.0.1:8000/`
+* **Interactive Swagger UI**: `http://127.0.0.1:8000/docs`
+* **ReDoc Documentation**: `http://127.0.0.1:8000/redoc`
+
+**Available Endpoints:**
+- `GET  /api/v1/health` - Operational health status of models and Supabase.
+- `POST /api/v1/patient/screen` - Clinical screening (Age, Gender, Fever days, Rash) -> Diagnosis & Outbreak context.
+- `GET  /api/v1/forecast/dengue` - 6-month Holt-Winters projections with Z-score outbreak classification.
+- `GET  /api/v1/forecast/typhoid` - 6-month SARIMA projections with Z-score outbreak classification.
+- `GET  /api/v1/surveillance/summary` - Dual-disease community surveillance scan.
+- `GET  /api/v1/alerts` - Live outbreak warning alarms from Supabase.
+- `GET  /api/v1/patients/recent` - Recent clinical intake records from Supabase.
+
+---
+
 ## 🏋️‍♂️ Training Individual Models
 
 All models can be retrained independently at any time. Generated weights are automatically saved to `saved_models/`:
