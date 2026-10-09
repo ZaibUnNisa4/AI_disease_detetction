@@ -126,6 +126,17 @@ uvicorn main:app --reload --port 8000
 
 ---
 
+### Option 4: Launch the PulseWatch Web Dashboard (React + Vite)
+Start the modern clinical and surveillance dashboard interface:
+```bash
+cd frontend
+npm run dev
+```
+* **Frontend Web App**: `http://localhost:5173/`
+* Make sure the FastAPI backend (`python main.py`) is running on port 8000 so the dashboard can fetch live forecasts, patient records, and submit clinical intakes.
+
+---
+
 ## 🏋️‍♂️ Training Individual Models
 
 All models can be retrained independently at any time. Generated weights are automatically saved to `saved_models/`:
