@@ -1,0 +1,11 @@
+{
+  "name": "pulsewatch-numl-fyp",
+  "version": "1.0.0",
+  "description": "AI-Based Infectious Disease Detection & Outbreak Monitoring System (NUML FYP)",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview",
+    "start": "python main.py"
+  }
+}

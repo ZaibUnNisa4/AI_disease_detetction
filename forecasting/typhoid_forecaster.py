@@ -35,17 +35,35 @@ class TyphoidForecaster:
             self._historical_df = load_typhoid_monthly_series()
         return self._historical_df
 
+    def get_monthly_seasonal_stats(self) -> dict:
+        df = self.historical_data.copy()
+        df["month"] = pd.to_datetime(df["ds"]).dt.month
+        stats = {}
+        global_mean = float(df["y"].mean())
+        global_std = float(df["y"].std()) if float(df["y"].std()) > 1e-6 else max(global_mean * 0.25, 1.0)
+        for m in range(1, 13):
+            m_vals = df[df["month"] == m]["y"]
+            if len(m_vals) > 0:
+                m_mean = float(m_vals.mean())
+                m_std = float(m_vals.std()) if len(m_vals) > 1 and float(m_vals.std()) > 1e-6 else max(m_mean * 0.25, 1.0)
+            else:
+                m_mean = global_mean
+                m_std = global_std
+            stats[m] = {"mean": round(m_mean, 1), "std": round(m_std, 1)}
+        return stats
+
     def get_historical_stats(self) -> dict:
         df = self.historical_data
         mean_val = float(df["y"].mean())
         std_val = float(df["y"].std())
         return {
             "disease": "Typhoid",
-            "mean": mean_val,
-            "std": std_val,
+            "mean": round(mean_val, 1),
+            "std": round(std_val, 1),
             "total_months": len(df),
             "last_date": str(df["ds"].max().date()),
-            "last_cases": int(df["y"].iloc[-1])
+            "last_cases": int(df["y"].iloc[-1]),
+            "seasonal_baselines": self.get_monthly_seasonal_stats()
         }
 
     def forecast(self, steps: int = 6) -> pd.DataFrame:

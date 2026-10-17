@@ -1,0 +1,56 @@
+[
+  {
+    "id": "usr_001",
+    "email": "ayesha.khan@numl.edu.pk",
+    "name": "Dr. Ayesha Khan",
+    "role": "Chief Epidemiologist",
+    "institution": "Pakistan Institute of Medical Sciences (PIMS)",
+    "badge": "Senior Epidemiologist",
+    "password_hash": "e3e77ff1b5cb3f8ca32e7b0b4853caed17f09786d4ff24e5c830e7195e8e9616",
+    "created_at": "2026-01-01T00:00:00Z",
+    "phone": "+92 (51) 9261170",
+    "department": "Epidemiology & Surveillance Directorate"
+  },
+  {
+    "id": "usr_002",
+    "email": "bilal.ahmed@numl.edu.pk",
+    "name": "Dr. Bilal Ahmed",
+    "role": "Infectious Disease Specialist",
+    "institution": "Holy Family Hospital",
+    "badge": "Consultant Physician",
+    "password_hash": "c5521d47923f6c51d9886446e88daff2300bcec094f44250ce70767848f880a0",
+    "created_at": "2026-01-01T00:00:00Z"
+  },
+  {
+    "id": "usr_003",
+    "email": "admin@pulsewatch.org",
+    "name": "Surveillance Directorate",
+    "role": "System Administrator",
+    "institution": "National Command Hub",
+    "badge": "Super Admin",
+    "password_hash": "ea544d16cb34fa2d9a187c0784f0a58eda0cb147b34628611668efd869baf326",
+    "created_at": "2026-01-01T00:00:00Z"
+  },
+  {
+    "id": "usr_5373c9f9",
+    "email": "tariq.mahmood@numl.edu.pk",
+    "name": "Dr. Tariq Mahmood",
+    "role": "Surveillance Analyst",
+    "institution": "National Health Center",
+    "badge": "Clinical Staff",
+    "password_hash": "dda69783f28fdf6f1c5a83e8400f2472e9300887d1dffffe12a07b92a3d0aa25",
+    "created_at": "2026-10-16T11:45:13Z"
+  },
+  {
+    "id": "usr_845eccfa",
+    "email": "sanni@numl.edu.pk",
+    "name": "Sanni",
+    "role": "Surveillance Analyst",
+    "institution": "Civil Hospital (Karachi)",
+    "badge": "Clinical Staff",
+    "password_hash": "8886f2a01d0d20720fa8b79e74796186418bf7df61b3c9cd334f21595c27eda4",
+    "created_at": "2026-10-16T12:08:44Z",
+    "phone": "+92 (51) 9261170",
+    "department": "Epidemiology & Surveillance Directorate"
+  }
+]

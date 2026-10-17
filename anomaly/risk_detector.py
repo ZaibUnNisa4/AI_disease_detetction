@@ -43,16 +43,39 @@ class RiskDetector:
 
     def assess_forecast(self, forecast_df: pd.DataFrame, baseline_stats: dict) -> pd.DataFrame:
         """
-        Annotate a forecast DataFrame with Z-score and risk classification.
+        Annotate a forecast DataFrame with seasonally-adjusted or global Z-score and risk classification.
         Expects columns: ['Date', 'Disease', 'Predicted_Cases'].
         """
         df = forecast_df.copy()
-        mean = baseline_stats["mean"]
-        std = baseline_stats["std"] if baseline_stats["std"] > 1e-6 else 1.0
+        seasonal = baseline_stats.get("seasonal_baselines", {})
 
-        df["Baseline_Mean"] = round(mean, 1)
-        df["Baseline_Std"] = round(std, 1)
-        df["Z_Score"] = ((df["Predicted_Cases"] - mean) / std).round(2)
+        baseline_means = []
+        baseline_stds = []
+        z_scores = []
+
+        for _, row in df.iterrows():
+            m_mean = baseline_stats.get("mean", 0.0)
+            m_std = baseline_stats.get("std", 1.0)
+
+            if seasonal:
+                try:
+                    month_num = pd.to_datetime(row["Date"]).month
+                    if month_num in seasonal:
+                        m_mean = seasonal[month_num].get("mean", m_mean)
+                        m_std = seasonal[month_num].get("std", m_std)
+                except Exception:
+                    pass
+
+            m_std = m_std if m_std > 1e-6 else 1.0
+            z = (row["Predicted_Cases"] - m_mean) / m_std
+
+            baseline_means.append(round(m_mean, 1))
+            baseline_stds.append(round(m_std, 1))
+            z_scores.append(round(float(z), 2))
+
+        df["Baseline_Mean"] = baseline_means
+        df["Baseline_Std"] = baseline_stds
+        df["Z_Score"] = z_scores
         df["Risk_Level"] = df["Z_Score"].apply(classify_zscore)
         df["Is_Anomaly"] = df["Risk_Level"].isin(["Alert", "Critical"])
 
