@@ -52,10 +52,10 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="Infectious Disease Surveillance & Diagnostic API",
+    title="Syndromic Event Early Warning System API",
     description="""
 ### NUML Final Year Project (FYP)
-**AI-Based Infectious Disease Detection & Outbreak Monitoring System**
+**Syndromic Event Early Warning System**
 
 This REST API serves three analytical phases:
 1. **Time-Series Forecasting**: Dengue (Holt-Winters) and Typhoid (SARIMA) monthly projections.

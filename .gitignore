@@ -16,3 +16,14 @@ dist/
 frontend/dist/
 .env.local
 frontend/.env.local
+
+# Obsidian & Local Second Brain
+.obsidian/
+00_Agente/
+01_Skills/
+02_Proyectos/
+03_Sesiones/
+04_Herramientas/
+00 Antigravity Hub.md
+context-manifest.json
+

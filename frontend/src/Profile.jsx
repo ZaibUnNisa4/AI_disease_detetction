@@ -205,7 +205,7 @@ export default function Profile({ user, apiBase, onProfileUpdated, say }) {
 
           <div className="profile-card-footer">
             <small>National University of Modern Languages · Final Year Project</small>
-            <small className="profile-sub-note">PulseWatch Surveillance Access Tier: Class-1 Diagnostics</small>
+            <small className="profile-sub-note">Syndromic Event Early Warning System · Class-1 Diagnostics</small>
           </div>
         </aside>
 

@@ -31,6 +31,16 @@ const DEMO_ACCOUNTS = [
     badge: 'Super Admin',
     icon: '🛡️',
     color: '#c28736'
+  },
+  {
+    name: 'Sanni',
+    role: 'System Administrator',
+    institution: 'National Command & Operations Center',
+    email: 'sanni@gmail.com',
+    password: 'Sanni123',
+    badge: 'Super Admin',
+    icon: '🛡️',
+    color: '#c28736'
   }
 ];
 
@@ -226,7 +236,7 @@ export default function Login({ apiBase, onLoginSuccess }) {
             <div className="auth-brand">
               <span className="auth-mark-pulse">✳</span>
               <div>
-                <h2>PulseWatch</h2>
+                <h2>Syndromic Event Early Warning System</h2>
                 <span className="auth-brand-sub">PUBLIC HEALTH & CLINICAL INTELLIGENCE</span>
               </div>
             </div>
