@@ -17,6 +17,11 @@ frontend/dist/
 .env.local
 frontend/.env.local
 
+# Documents & Reports
+*.docx
+*.doc
+*.pdf
+
 # Obsidian & Local Second Brain
 .obsidian/
 00_Agente/
